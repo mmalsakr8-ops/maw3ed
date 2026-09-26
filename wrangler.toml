@@ -1,0 +1,8 @@
+name = "maw3ed"
+main = "worker.js"
+compatibility_date = "2026-09-27"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "maw3ed-db"
+database_id = "PUT_YOUR_D1_DATABASE_ID_HERE"

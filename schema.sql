@@ -1,17 +1,15 @@
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   phone TEXT UNIQUE,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'restaurant_admin' CHECK(role IN ('super_admin','restaurant_admin')),
+  role TEXT NOT NULL DEFAULT 'restaurant_admin',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-  id TEXT PRIMARY KEY,
+  token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL,
   expires_at TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -30,7 +28,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
   logo_url TEXT,
   cover_url TEXT,
   description TEXT,
-  subscription_status TEXT NOT NULL DEFAULT 'trial' CHECK(subscription_status IN ('trial','active','stopped','expired')),
+  subscription_status TEXT NOT NULL DEFAULT 'trial',
   trial_ends_at TEXT NOT NULL,
   subscription_plan TEXT,
   subscription_starts_at TEXT,
@@ -60,15 +58,23 @@ CREATE TABLE IF NOT EXISTS bookings (
   party_size INTEGER NOT NULL,
   booking_date TEXT NOT NULL,
   booking_time TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','confirmed','completed','cancelled','rejected')),
+  status TEXT NOT NULL DEFAULT 'pending',
   notes TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
   FOREIGN KEY(table_id) REFERENCES tables_config(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
-CREATE INDEX IF NOT EXISTS idx_restaurants_slug ON restaurants(slug);
-CREATE INDEX IF NOT EXISTS idx_tables_restaurant ON tables_config(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_bookings_restaurant_date ON bookings(restaurant_id, booking_date, booking_time);
+CREATE TABLE IF NOT EXISTS payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  restaurant_id INTEGER NOT NULL,
+  plan TEXT NOT NULL,
+  amount REAL NOT NULL,
+  paid_at TEXT NOT NULL,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL,
+  method TEXT,
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+);

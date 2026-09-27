@@ -46,7 +46,7 @@ async function api(req,url,env){const db=env.DB;await init(db);const m=req.metho
     const u=await db.prepare("SELECT * FROM users WHERE lower(email)=? OR phone=?").bind(ident,ident).first();
     if(!u||u.password_hash!==await hash(p))return json({error:"بيانات الدخول غير صحيحة"},401);
     const id=crypto.randomUUID(),exp=new Date(Date.now()+SESSION_DAYS*86400000).toISOString();await db.prepare("INSERT INTO sessions(id,user_id,expires_at) VALUES(?,?,?)").bind(id,u.id,exp).run();
-    return json({ok:true,role:u.role},{headers:{"set-cookie":setSession(id)}});
+    return json({ok:true,role:u.role},200,{"set-cookie":setSession(id)});
   }
   if(url.pathname==="/api/logout"&&m==="POST"){const sid=sidFrom(req);if(sid)await db.prepare("DELETE FROM sessions WHERE id=?").bind(sid).run();return json({ok:true},{headers:{"set-cookie":`${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`}})}
   if(url.pathname==="/api/me"&&m==="GET"){const u=await user(req,db);return json({user:u?{id:u.id,name:u.name,email:u.email,phone:u.phone,role:u.role}:null})}

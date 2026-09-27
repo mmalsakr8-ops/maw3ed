@@ -29,7 +29,7 @@ async function slug(db,name){let b=slugify(name),s=b,n=1;while(await db.prepare(
 function sidFrom(req){const c=req.headers.get("cookie")||"",m=c.match(new RegExp(`${COOKIE}=([^;]+)`));return m?.[1]||null}
 async function user(req,db){const sid=sidFrom(req);if(!sid)return null;return db.prepare(`SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.id=? AND s.expires_at>?`).bind(sid,now()).first()}
 async function restaurant(db,u){return db.prepare("SELECT * FROM restaurants WHERE owner_id=?").bind(u.id).first()}
-function setSession(id){return `${COOKIE}=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS*86400}`}
+function setSession(id){return `${COOKIE}=${id}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_DAYS*86400}`}
 
 async function api(req,url,env){const db=env.DB;await init(db);const m=req.method;
   if(url.pathname==="/api/register"&&m==="POST"){
@@ -48,7 +48,7 @@ async function api(req,url,env){const db=env.DB;await init(db);const m=req.metho
     const id=crypto.randomUUID(),exp=new Date(Date.now()+SESSION_DAYS*86400000).toISOString();await db.prepare("INSERT INTO sessions(id,user_id,expires_at) VALUES(?,?,?)").bind(id,u.id,exp).run();
     return json({ok:true,role:u.role},200,{"set-cookie":setSession(id)});
   }
-  if(url.pathname==="/api/logout"&&m==="POST"){const sid=sidFrom(req);if(sid)await db.prepare("DELETE FROM sessions WHERE id=?").bind(sid).run();return json({ok:true},{headers:{"set-cookie":`${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`}})}
+  if(url.pathname==="/api/logout"&&m==="POST"){const sid=sidFrom(req);if(sid)await db.prepare("DELETE FROM sessions WHERE id=?").bind(sid).run();return json({ok:true},200,{"set-cookie":`${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`})}
   if(url.pathname==="/api/me"&&m==="GET"){const u=await user(req,db);return json({user:u?{id:u.id,name:u.name,email:u.email,phone:u.phone,role:u.role}:null})}
 
   const u=await user(req,db);if(!u)return json({error:"يجب تسجيل الدخول"},401);
